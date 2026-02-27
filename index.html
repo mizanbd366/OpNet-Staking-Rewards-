@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpNet Staking</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f3ee;
+    --surface: #ffffff;
+    --surface2: #f0ede6;
+    --accent: #e8600a;
+    --accent2: #f59e0b;
+    --text: #1a1714;
+    --text2: #6b6560;
+    --border: #e2ddd6;
+    --green: #16a34a;
+    --red: #dc2626;
+    --shadow: 0 4px 24px rgba(0,0,0,0.08);
+    --shadow-lg: 0 12px 48px rgba(0,0,0,0.12);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+  /* Header */
+  header {
+    background:var(--surface);
+    border-bottom:1px solid var(--border);
+    padding:0 2rem;
+    display:flex; align-items:center; justify-content:space-between;
+    height:68px; position:sticky; top:0; z-index:100;
+    box-shadow:0 2px 12px rgba(0,0,0,0.05);
+  }
+  .logo { font-family:'Syne',sans-serif; font-weight:800; font-size:1.4rem; display:flex; align-items:center; gap:8px; }
+  .logo-dot { width:10px; height:10px; background:var(--accent); border-radius:50%; }
+  nav { display:flex; gap:4px; }
+  nav button {
+    background:none; border:none; padding:8px 16px; border-radius:8px;
+    font-family:'DM Sans',sans-serif; font-size:0.9rem; cursor:pointer;
+    color:var(--text2); transition:all 0.2s; font-weight:500;
+  }
+  nav button.active, nav button:hover { background:var(--surface2); color:var(--text); }
+  nav button.active { color:var(--accent); font-weight:600; }
+  .wallet-btn {
+    background:var(--accent); color:#fff; border:none; padding:10px 20px;
+    border-radius:10px; font-family:'DM Sans',sans-serif; font-size:0.9rem;
+    cursor:pointer; font-weight:600; transition:all 0.2s; display:flex; align-items:center; gap:8px;
+  }
+  .wallet-btn:hover { background:#d4540a; transform:translateY(-1px); box-shadow:0 4px 12px rgba(232,96,10,0.3); }
+  .wallet-btn.connected { background:var(--surface2); color:var(--text); }
+
+  /* Pages */
+  .page { display:none; padding:2rem; max-width:1100px; margin:0 auto; animation:fadeIn 0.3s ease; }
+  .page.active { display:block; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+  /* Dashboard */
+  .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:1rem; margin-bottom:2rem; }
+  .stat-card {
+    background:var(--surface); border-radius:16px; padding:1.5rem;
+    border:1px solid var(--border); box-shadow:var(--shadow);
+    transition:transform 0.2s;
+  }
+  .stat-card:hover { transform:translateY(-2px); }
+  .stat-label { font-size:0.8rem; color:var(--text2); font-weight:500; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.5rem; }
+  .stat-value { font-family:'Syne',sans-serif; font-size:1.8rem; font-weight:700; }
+  .stat-change { font-size:0.8rem; margin-top:4px; font-weight:500; }
+  .stat-change.up { color:var(--green); }
+  .stat-change.down { color:var(--red); }
+  .accent-card { background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff; }
+  .accent-card .stat-label { color:rgba(255,255,255,0.8); }
+  .accent-card .stat-change { color:rgba(255,255,255,0.9); }
+
+  /* Pool Cards */
+  .section-title { font-family:'Syne',sans-serif; font-size:1.2rem; font-weight:700; margin-bottom:1rem; }
+  .pool-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:1rem; }
+  .pool-card {
+    background:var(--surface); border-radius:16px; padding:1.5rem;
+    border:1px solid var(--border); box-shadow:var(--shadow);
+  }
+  .pool-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; }
+  .pool-name { font-family:'Syne',sans-serif; font-weight:700; font-size:1rem; display:flex; align-items:center; gap:8px; }
+  .pool-icon { width:36px; height:36px; background:linear-gradient(135deg,var(--accent),var(--accent2)); border-radius:10px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:1rem; }
+  .apy-badge { background:rgba(22,163,74,0.1); color:var(--green); font-size:0.8rem; font-weight:700; padding:4px 10px; border-radius:20px; }
+  .pool-stats { display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; margin-bottom:1rem; }
+  .pool-stat-label { font-size:0.75rem; color:var(--text2); margin-bottom:2px; }
+  .pool-stat-value { font-weight:600; font-size:0.95rem; }
+  .progress-bar { background:var(--surface2); border-radius:4px; height:6px; overflow:hidden; margin-bottom:1rem; }
+  .progress-fill { height:100%; background:linear-gradient(90deg,var(--accent),var(--accent2)); border-radius:4px; transition:width 0.5s ease; }
+  .stake-btn {
+    width:100%; padding:10px; background:var(--accent); color:#fff;
+    border:none; border-radius:10px; font-family:'DM Sans',sans-serif;
+    font-size:0.9rem; font-weight:600; cursor:pointer; transition:all 0.2s;
+  }
+  .stake-btn:hover { background:#d4540a; }
+
+  /* Stake / Unstake */
+  .stake-container { max-width:560px; margin:0 auto; }
+  .tab-group { display:flex; background:var(--surface2); border-radius:12px; padding:4px; margin-bottom:1.5rem; }
+  .tab-btn { flex:1; padding:10px; border:none; background:none; border-radius:9px; font-family:'DM Sans',sans-serif; font-weight:600; cursor:pointer; color:var(--text2); transition:all 0.2s; font-size:0.9rem; }
+  .tab-btn.active { background:var(--surface); color:var(--accent); box-shadow:0 2px 8px rgba(0,0,0,0.08); }
+  .card { background:var(--surface); border-radius:20px; padding:2rem; border:1px solid var(--border); box-shadow:var(--shadow-lg); }
+  .input-group { margin-bottom:1.25rem; }
+  .input-label { font-size:0.85rem; font-weight:500; color:var(--text2); margin-bottom:0.5rem; display:block; }
+  .input-wrap { position:relative; }
+  .input-wrap input {
+    width:100%; padding:14px 80px 14px 16px; border:1.5px solid var(--border);
+    border-radius:12px; font-family:'DM Sans',sans-serif; font-size:1.1rem;
+    font-weight:600; background:var(--surface); color:var(--text);
+    transition:border-color 0.2s; outline:none;
+  }
+  .input-wrap input:focus { border-color:var(--accent); }
+  .input-suffix { position:absolute; right:14px; top:50%; transform:translateY(-50%); font-weight:700; color:var(--text2); font-size:0.85rem; }
+  .max-btn { position:absolute; right:60px; top:50%; transform:translateY(-50%); background:var(--accent); color:#fff; border:none; border-radius:6px; padding:4px 8px; font-size:0.75rem; font-weight:700; cursor:pointer; }
+  .balance-row { display:flex; justify-content:space-between; font-size:0.82rem; color:var(--text2); margin-bottom:1.5rem; }
+  .action-btn {
+    width:100%; padding:14px; background:var(--accent); color:#fff;
+    border:none; border-radius:12px; font-family:'Syne',sans-serif;
+    font-size:1rem; font-weight:700; cursor:pointer; transition:all 0.2s;
+  }
+  .action-btn:hover { background:#d4540a; transform:translateY(-1px); box-shadow:0 6px 20px rgba(232,96,10,0.3); }
+  .action-btn:disabled { background:#ccc; cursor:not-allowed; transform:none; box-shadow:none; }
+  .info-box { background:var(--surface2); border-radius:12px; padding:1rem; margin-bottom:1.25rem; }
+  .info-row { display:flex; justify-content:space-between; font-size:0.88rem; padding:4px 0; }
+  .info-row span:first-child { color:var(--text2); }
+  .info-row span:last-child { font-weight:600; }
+
+  /* Rewards */
+  .rewards-grid { display:grid; grid-template-columns:1fr 2fr; gap:1.5rem; }
+  .rewards-summary { background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff; border-radius:20px; padding:2rem; }
+  .rewards-summary h3 { font-family:'Syne',sans-serif; font-size:0.9rem; opacity:0.8; margin-bottom:0.5rem; }
+  .rewards-amount { font-family:'Syne',sans-serif; font-size:2.5rem; font-weight:800; margin-bottom:1.5rem; }
+  .claim-btn {
+    background:#fff; color:var(--accent); border:none; padding:12px 24px;
+    border-radius:10px; font-family:'Syne',sans-serif; font-weight:700;
+    cursor:pointer; transition:all 0.2s; font-size:0.95rem;
+  }
+  .claim-btn:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(0,0,0,0.15); }
+  .reward-list { background:var(--surface); border-radius:20px; padding:1.5rem; border:1px solid var(--border); box-shadow:var(--shadow); }
+  .reward-item { display:flex; align-items:center; justify-content:space-between; padding:14px 0; border-bottom:1px solid var(--border); }
+  .reward-item:last-child { border-bottom:none; }
+  .reward-info { display:flex; align-items:center; gap:12px; }
+  .reward-icon { width:40px; height:40px; background:var(--surface2); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; }
+  .reward-name { font-weight:600; font-size:0.95rem; }
+  .reward-sub { font-size:0.8rem; color:var(--text2); }
+  .reward-amount { text-align:right; }
+  .reward-val { font-weight:700; font-size:0.95rem; }
+  .reward-usd { font-size:0.78rem; color:var(--text2); }
+
+  /* History */
+  .history-table { background:var(--surface); border-radius:20px; border:1px solid var(--border); overflow:hidden; box-shadow:var(--shadow); }
+  .table-header { display:grid; grid-template-columns:1fr 1fr 1fr 1fr 1fr; padding:14px 20px; background:var(--surface2); font-size:0.8rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:var(--text2); }
+  .table-row { display:grid; grid-template-columns:1fr 1fr 1fr 1fr 1fr; padding:16px 20px; border-top:1px solid var(--border); align-items:center; transition:background 0.15s; }
+  .table-row:hover { background:var(--surface2); }
+  .tx-type { display:inline-flex; align-items:center; gap:6px; font-weight:600; font-size:0.88rem; }
+  .badge { padding:4px 10px; border-radius:20px; font-size:0.78rem; font-weight:600; }
+  .badge.stake { background:rgba(22,163,74,0.1); color:var(--green); }
+  .badge.unstake { background:rgba(220,38,38,0.1); color:var(--red); }
+  .badge.claim { background:rgba(232,96,10,0.1); color:var(--accent); }
+  .badge.success { background:rgba(22,163,74,0.1); color:var(--green); }
+  .tx-hash { font-size:0.8rem; color:var(--text2); font-family:monospace; }
+
+  /* Notification */
+  .toast {
+    position:fixed; bottom:2rem; right:2rem; background:var(--text);
+    color:#fff; padding:14px 20px; border-radius:12px; font-size:0.9rem;
+    font-weight:500; transform:translateY(100px); opacity:0;
+    transition:all 0.3s; z-index:1000; max-width:300px;
+  }
+  .toast.show { transform:translateY(0); opacity:1; }
+
+  /* Connect overlay */
+  .connect-hint {
+    text-align:center; padding:3rem; background:var(--surface);
+    border-radius:20px; border:2px dashed var(--border); margin:2rem 0;
+  }
+  .connect-hint h3 { font-family:'Syne',sans-serif; font-size:1.2rem; margin-bottom:0.5rem; }
+  .connect-hint p { color:var(--text2); margin-bottom:1.5rem; font-size:0.9rem; }
+
+  @media(max-width:768px) {
+    header { padding:0 1rem; }
+    .page { padding:1rem; }
+    .rewards-grid { grid-template-columns:1fr; }
+    .table-header, .table-row { grid-template-columns:1fr 1fr 1fr; }
+    .table-header > *:nth-child(4), .table-row > *:nth-child(4),
+    .table-header > *:nth-child(5), .table-row > *:nth-child(5) { display:none; }
+    nav { display:none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo"><div class="logo-dot"></div>OpNet Staking</div>
+  <nav>
+    <button class="active" onclick="showPage('dashboard',this)">Dashboard</button>
+    <button onclick="showPage('stake',this)">Stake</button>
+    <button onclick="showPage('rewards',this)">Rewards</button>
+    <button onclick="showPage('history',this)">History</button>
+  </nav>
+  <button class="wallet-btn" id="walletBtn" onclick="connectWallet()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
+    <span id="walletText">Connect OpWallet</span>
+  </button>
+</header>
+
+<!-- DASHBOARD -->
+<div class="page active" id="page-dashboard">
+  <div style="margin-bottom:1.5rem;">
+    <h1 style="font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800;">Dashboard</h1>
+    <p style="color:var(--text2);font-size:0.9rem;margin-top:4px;">Your staking overview at a glance</p>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card accent-card">
+      <div class="stat-label">Total Staked</div>
+      <div class="stat-value" id="dash-staked">0 OP</div>
+      <div class="stat-change up">↑ +2.4% this week</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Pending Rewards</div>
+      <div class="stat-value" id="dash-rewards" style="color:var(--accent)">0 OP</div>
+      <div class="stat-change up">↑ +5.1% today</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Portfolio Value</div>
+      <div class="stat-value" id="dash-value">$0.00</div>
+      <div class="stat-change up">↑ +$12.40</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Best APY</div>
+      <div class="stat-value" style="color:var(--green)">24.5%</div>
+      <div class="stat-change up">OP/BTC Pool</div>
+    </div>
+  </div>
+
+  <div class="section-title">Active Staking Pools</div>
+  <div class="pool-grid">
+    <div class="pool-card">
+      <div class="pool-header">
+        <div class="pool-name"><div class="pool-icon">⬡</div>OP / BTC</div>
+        <div class="apy-badge">24.5% APY</div>
+      </div>
+      <div class="pool-stats">
+        <div><div class="pool-stat-label">Total Liquidity</div><div class="pool-stat-value">$4.2M</div></div>
+        <div><div class="pool-stat-label">My Stake</div><div class="pool-stat-value" id="p1-stake">0 OP</div></div>
+        <div><div class="pool-stat-label">Min Lock</div><div class="pool-stat-value">7 Days</div></div>
+        <div><div class="pool-stat-label">Participants</div><div class="pool-stat-value">1,248</div></div>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:72%"></div></div>
+      <div style="font-size:0.78rem;color:var(--text2);margin-bottom:1rem;">72% pool capacity filled</div>
+      <button class="stake-btn" onclick="showPage('stake',document.querySelector('nav button:nth-child(2)'));selectPool('OP/BTC')">Stake Now →</button>
+    </div>
+    <div class="pool-card">
+      <div class="pool-header">
+        <div class="pool-name"><div class="pool-icon" style="background:linear-gradient(135deg,#3b82f6,#8b5cf6)">⬡</div>OP / ETH</div>
+        <div class="apy-badge">18.2% APY</div>
+      </div>
+      <div class="pool-stats">
+        <div><div class="pool-stat-label">Total Liquidity</div><div class="pool-stat-value">$2.8M</div></div>
+        <div><div class="pool-stat-label">My Stake</div><div class="pool-stat-value">0 OP</div></div>
+        <div><div class="pool-stat-label">Min Lock</div><div class="pool-stat-value">3 Days</div></div>
+        <div><div class="pool-stat-label">Participants</div><div class="pool-stat-value">894</div></div>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:48%;background:linear-gradient(90deg,#3b82f6,#8b5cf6)"></div></div>
+      <div style="font-size:0.78rem;color:var(--text2);margin-bottom:1rem;">48% pool capacity filled</div>
+      <button class="stake-btn" style="background:#3b82f6" onclick="showPage('stake',document.querySelector('nav button:nth-child(2)'));selectPool('OP/ETH')">Stake Now →</button>
+    </div>
+    <div class="pool-card">
+      <div class="pool-header">
+        <div class="pool-name"><div class="pool-icon" style="background:linear-gradient(135deg,#16a34a,#059669)">⬡</div>OP Solo</div>
+        <div class="apy-badge">12.8% APY</div>
+      </div>
+      <div class="pool-stats">
+        <div><div class="pool-stat-label">Total Liquidity</div><div class="pool-stat-value">$1.1M</div></div>
+        <div><div class="pool-stat-label">My Stake</div><div class="pool-stat-value">0 OP</div></div>
+        <div><div class="pool-stat-label">Min Lock</div><div class="pool-stat-value">1 Day</div></div>
+        <div><div class="pool-stat-label">Participants</div><div class="pool-stat-value">562</div></div>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:31%;background:linear-gradient(90deg,#16a34a,#059669)"></div></div>
+      <div style="font-size:0.78rem;color:var(--text2);margin-bottom:1rem;">31% pool capacity filled</div>
+      <button class="stake-btn" style="background:#16a34a" onclick="showPage('stake',document.querySelector('nav button:nth-child(2)'));selectPool('OP Solo')">Stake Now →</button>
+    </div>
+  </div>
+</div>
+
+<!-- STAKE / UNSTAKE -->
+<div class="page" id="page-stake">
+  <div style="margin-bottom:1.5rem;text-align:center;">
+    <h1 style="font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800;">Stake & Unstake</h1>
+    <p style="color:var(--text2);font-size:0.9rem;margin-top:4px;">Earn rewards by staking your OP tokens</p>
+  </div>
+
+  <div class="stake-container" id="stake-content">
+    <div class="connect-hint" id="stake-connect-hint">
+      <h3>Connect your OpWallet first</h3>
+      <p>Please connect your OpWallet to start staking OP tokens</p>
+      <button class="wallet-btn" style="margin:0 auto" onclick="connectWallet()">🔗 Connect OpWallet</button>
+    </div>
+
+    <div id="stake-form" style="display:none">
+      <div style="background:var(--surface2);border-radius:12px;padding:12px 16px;margin-bottom:1.25rem;display:flex;align-items:center;gap:10px;font-size:0.88rem;">
+        <span>Pool:</span>
+        <select id="poolSelect" style="border:none;background:none;font-family:'DM Sans',sans-serif;font-weight:600;font-size:0.88rem;color:var(--accent);cursor:pointer;outline:none;">
+          <option>OP/BTC — 24.5% APY</option>
+          <option>OP/ETH — 18.2% APY</option>
+          <option>OP Solo — 12.8% APY</option>
+        </select>
+      </div>
+
+      <div class="tab-group">
+        <button class="tab-btn active" onclick="switchStakeTab('stake',this)">Stake</button>
+        <button class="tab-btn" onclick="switchStakeTab('unstake',this)">Unstake</button>
+      </div>
+
+      <div class="card" id="stake-panel">
+        <div class="input-group">
+          <label class="input-label">Amount to Stake</label>
+          <div class="input-wrap">
+            <input type="number" id="stakeInput" placeholder="0.00" oninput="updateStakeInfo()">
+            <button class="max-btn" onclick="setMax('stakeInput','1,250.00')">MAX</button>
+            <span class="input-suffix" style="right:14px">OP</span>
+          </div>
+        </div>
+        <div class="balance-row">
+          <span>Available Balance</span>
+          <span style="font-weight:600">1,250.00 OP</span>
+        </div>
+        <div class="info-box">
+          <div class="info-row"><span>Lock Period</span><span>7 Days</span></div>
+          <div class="info-row"><span>Estimated APY</span><span style="color:var(--green)">24.5%</span></div>
+          <div class="info-row"><span>Est. Daily Reward</span><span id="dailyReward">0.00 OP</span></div>
+          <div class="info-row"><span>Est. Monthly Reward</span><span id="monthlyReward">0.00 OP</span></div>
+        </div>
+        <button class="action-btn" onclick="doStake()">Stake OP Tokens</button>
+      </div>
+
+      <div class="card" id="unstake-panel" style="display:none">
+        <div class="input-group">
+          <label class="input-label">Amount to Unstake</label>
+          <div class="input-wrap">
+            <input type="number" id="unstakeInput" placeholder="0.00">
+            <button class="max-btn" onclick="setMax('unstakeInput', stakedAmount.toString())">MAX</button>
+            <span class="input-suffix" style="ri
